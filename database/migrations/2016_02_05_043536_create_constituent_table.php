@@ -6,7 +6,6 @@ use Illuminate\Database\Migrations\Migration;
 class CreateConstituentTable extends Migration
 {
     /**
-     * Run the migrations.
      *
      * @return void
      */
@@ -23,13 +22,11 @@ class CreateConstituentTable extends Migration
     }
 
     /**
-     * Reverse the migrations.
      *
      * @return void
      */
     public function down()
-    {
-       
+    {  
         Schema::drop('constituents');
     }
 }
