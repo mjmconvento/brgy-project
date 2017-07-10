@@ -7,6 +7,7 @@ use App\Constituent as Constituent;
 use App\BrgyCaptain as BrgyCaptain;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 
 class ConstituentController extends Controller
 {
@@ -16,6 +17,8 @@ class ConstituentController extends Controller
      */
     public function index()
     {
+        // $user = Auth::user();
+        // dd($user->name);
         $constituents = Constituent::all();
         return view('Constituents/index', ['constituents' => $constituents ]);
     }

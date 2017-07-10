@@ -20,36 +20,18 @@
                     <span class="logo-mini"><b>B</b>P</span>
                     <span class="logo-lg"><b>B</b>rgy <b>P</b>roject</span>
                 </a>
+                @include('Templates.nav')
             </header>
             <aside class="main-sidebar">
-                <section class="sidebar">
-
-                    <ul class="sidebar-menu">
-                        <li><a href="/constituents"><i class="fa fa-circle-o text-red"></i> <span>Constituents</span></a></li>
-                        <li class="treeview">
-                            <a href="#">
-                                <i class="fa fa-circle-o text-yellow"></i> <span>Database</span> <i class="fa fa-angle-left pull-right"></i>
-                            </a>
-                            <ul class="treeview-menu">
-                                <li><a href="/brgy_captains"><i class="fa fa-circle-o"></i> Brgy. Captain Candidates</a></li>
-                            </ul>
-                        </li>
-
-                    </ul>
-                </section>
+                @include('Templates.sidebar')
             </aside>
             <div class="content-wrapper">
-                
                 <section class="content">
                     @yield('content')
                 </section>
-
             </div>
             <footer class="main-footer">
-                <div class="pull-right hidden-xs">
-                    <b>Version</b> 2.3.0
-                </div>
-                <strong>Copyright &copy; 2014-2015 <a href="http://almsaeedstudio.com">Almsaeed Studio</a>.</strong> All rights reserved.
+                <strong>Copyright &copy; <?php echo date('Y'); ?>. </strong> All rights reserved.
             </footer>
             <div class="control-sidebar-bg"></div>
         </div>
