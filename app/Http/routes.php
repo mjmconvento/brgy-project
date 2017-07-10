@@ -45,5 +45,10 @@ Route::group(['middleware' => 'auth'], function () {
 	Route::get('/tax/{cons_id}/{id}', 'TaxController@edit');
 	Route::put('/tax/{cons_id}/{id}', 'TaxController@update');
 	Route::delete('/tax/{cons_id}', 'TaxController@destroy');
+
+
+	// Taxes Routes
+	Route::get('/profile/{id}', 'ProfileController@edit');
+	Route::put('/profile/{id}', 'ProfileController@update');
 });
 
