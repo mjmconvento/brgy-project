@@ -43,7 +43,7 @@ class DatabaseSeeder extends Seeder
                     'first_name' => $generator->firstName,
                     'middle_name' => $generator->lastName,
                     'last_name' => $generator->lastName,
-                    'address' => '8 Fontaine Ext. East Tapinac Olongapo City',
+                    'address' => '74A Mariveles Quezon City',
                     'has_unpaid_tax' => $has_unpaid_taxes,
                     'has_record' => $has_criminal_record,
                     'brgy_captain_id' => $brgy_id,

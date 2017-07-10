@@ -30,7 +30,15 @@
                 <form action="register" method="POST">
                     {!! csrf_field() !!}
                     <div class="form-group has-feedback">
-                        <input type="text" name="name" class="form-control" placeholder="Full name">
+                        <input type="text" name="first_name" class="form-control" placeholder="First name">
+                        <span class="glyphicon glyphicon-user form-control-feedback"></span>
+                    </div>
+                    <div class="form-group has-feedback">
+                        <input type="text" name="middle_name" class="form-control" placeholder="Middle name">
+                        <span class="glyphicon glyphicon-user form-control-feedback"></span>
+                    </div>
+                    <div class="form-group has-feedback">
+                        <input type="text" name="last_name" class="form-control" placeholder="Last name">
                         <span class="glyphicon glyphicon-user form-control-feedback"></span>
                     </div>
                     <div class="form-group has-feedback">
@@ -47,8 +55,8 @@
                     </div>
                     <div class="row">
                         <div class="col-xs-12">
-                        <button type="submit" class="btn btn-primary btn-block btn-flat">Register</button>
-                    </div>
+                            <button type="submit" class="btn btn-primary btn-block btn-flat">Register</button>
+                        </div>
                     </div>
                 </form>
                 <br/>
