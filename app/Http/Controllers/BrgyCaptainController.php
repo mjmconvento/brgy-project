@@ -3,37 +3,35 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Constituent as Constituent;
 use App\BrgyCaptain as BrgyCaptain;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
-class ConstituentController extends Controller
+class BrgyCaptainController extends Controller
 {
     /**
+     * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function index()
     {
-        $constituents = Constituent::all();
-        return view('Constituents/index', ['constituents' => $constituents ]);
+        $brgy_captains = BrgyCaptain::all();
+        return view('BrgyCaptain/index', ['brgy_captains' => $brgy_captains ]);
     }
 
     /**
+     * Show the form for creating a new resource.
      *
      * @return \Illuminate\Http\Response
      */
     public function create()
     {
-        $brgy_captains = BrgyCaptain::all();
-        return view('Constituents/add_edit', [
-            'method' => 'add', 
-            'brgy_captains' => $brgy_captains
-        ]);
+        return view('BrgyCaptain/add_edit', ['method' => 'add']);
     }
 
     /**
+     * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
@@ -41,42 +39,38 @@ class ConstituentController extends Controller
     public function store(Request $request)
     {
         $input = $request->all();
-        $constituent = new Constituent;
+        $constituent = new BrgyCaptain;
         $this->save_data($input, $constituent);
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Added');
+        return redirect()->action('BrgyCaptainController@index')->with('status', 'Record Added');
     }
 
     /**
+     * Display the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function show($id)
     {
-        $constituent = Constituent::find($id);
-        return view('Constituents/show', [ 
-            'constituent' => $constituent, 
-        ]);
+        $brgy_captain = BrgyCaptain::find($id);
+        return view('BrgyCaptain/show', [ 'brgy_captain' => $brgy_captain ]);
     }
 
     /**
+     * Show the form for editing the specified resource.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function edit($id)
     {
-        $constituent = Constituent::find($id);
-        $brgy_captains = BrgyCaptain::all();
+        $brgy_captain = BrgyCaptain::find($id);
+        return view('BrgyCaptain/add_edit', [ 'brgy_captain' => $brgy_captain, 'method' => 'edit' ]);
 
-        return view('Constituents/add_edit', [ 
-            'constituent' => $constituent, 
-            'method' => 'edit', 
-            'brgy_captains' => $brgy_captains 
-        ]);
     }
 
     /**
+     * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
@@ -85,25 +79,24 @@ class ConstituentController extends Controller
     public function update(Request $request, $id)
     {
         $input = $request->all();
-        $constituent = Constituent::find($id);
-        $this->save_data($input, $constituent);
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Updated');
-
+        $brgy_captain = BrgyCaptain::find($id);
+        $this->save_data($input, $brgy_captain);
+        return redirect()->action('BrgyCaptainController@index');
     }
 
     /**
+     * Remove the specified resource from storage.
      *
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
     public function destroy($id)
     {
-        $constituent = Constituent::find($id);
-        $constituent->delete();
+        $brgy_captain = BrgyCaptain::find($id);
+        $brgy_captain->delete();
 
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Deleted');
+        return redirect()->action('BrgyCaptainController@index')->with('status', 'Record Deleted');
     }
-
 
     public function save_data($input, $constituent)
     {
@@ -111,7 +104,7 @@ class ConstituentController extends Controller
         $constituent->middle_name = $input['middle_name'];
         $constituent->last_name = $input['last_name'];
         $constituent->address = $input['address'];
-        $constituent->brgy_captain_id = $input['brgy_captain'];
         $constituent->save();
     }
+
 }

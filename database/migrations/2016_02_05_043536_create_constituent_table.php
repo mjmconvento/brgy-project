@@ -11,14 +11,18 @@ class CreateConstituentTable extends Migration
      */
     public function up()
     {
-        Schema::create('constituents', function (Blueprint $table) {
-            $table->increments('id');
-            $table->string('first_name');
-            $table->string('middle_name');
-            $table->string('last_name');
-            $table->string('address');
-            $table->timestamps();
-        });
+        DB::statement('CREATE TABLE constituent(
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            first_name VARCHAR(80), 
+            middle_name VARCHAR(80),
+            last_name VARCHAR(80),
+            address VARCHAR(255),
+            brgy_captain_id INT,
+            has_record BOOLEAN,
+            has_unpaid_tax BOOLEAN,
+            created_at DATETIME,
+            updated_at DATETIME
+        )');
     }
 
     /**
@@ -27,6 +31,6 @@ class CreateConstituentTable extends Migration
      */
     public function down()
     {  
-        Schema::drop('constituents');
+        Schema::drop('constituent');
     }
 }

@@ -3,20 +3,22 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateCriminalRecordTable extends Migration
+class CreateTaxTable extends Migration
 {
     /**
+     * Run the migrations.
      *
      * @return void
      */
     public function up()
     {
-        DB::statement('CREATE TABLE criminal_record(
+        DB::statement('CREATE TABLE tax(
             id INT AUTO_INCREMENT PRIMARY KEY,
             constituent_id INT, 
-            case_name VARCHAR(80),
-            details LONGTEXT,
-            execution_date DATETIME,
+            amount DOUBLE,
+            payment_month VARCHAR(80),
+            payment_year VARCHAR(80),
+            status VARCHAR(80),
             created_at DATETIME,
             updated_at DATETIME,
             FOREIGN KEY (constituent_id) REFERENCES constituent(id) ON DELETE CASCADE
@@ -24,11 +26,12 @@ class CreateCriminalRecordTable extends Migration
     }
 
     /**
+     * Reverse the migrations.
      *
      * @return void
      */
     public function down()
     {
-        Schema::drop('criminal_record');
+        Schema::drop('tax');
     }
 }

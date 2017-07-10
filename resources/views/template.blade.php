@@ -25,9 +25,16 @@
                 <section class="sidebar">
 
                     <ul class="sidebar-menu">
-                        <li><a href="/"><i class="fa fa-circle-o text-aqua"></i> <span>Home</span></a></li>
                         <li><a href="/constituents"><i class="fa fa-circle-o text-red"></i> <span>Constituents</span></a></li>
-                        <li><a href="#"><i class="fa fa-circle-o text-yellow"></i> <span>Warning</span></a></li>
+                        <li class="treeview">
+                            <a href="#">
+                                <i class="fa fa-circle-o text-yellow"></i> <span>Database</span> <i class="fa fa-angle-left pull-right"></i>
+                            </a>
+                            <ul class="treeview-menu">
+                                <li><a href="/brgy_captains"><i class="fa fa-circle-o"></i> Brgy. Captain Candidates</a></li>
+                            </ul>
+                        </li>
+
                     </ul>
                 </section>
             </aside>

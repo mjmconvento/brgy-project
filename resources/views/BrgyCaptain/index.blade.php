@@ -20,58 +20,40 @@
             <div class="box">
                 <div class="box">
                     <div class="box-header">
-                        <h3 class="box-title">Constituents List</h3>
-                        <a class="btn btn-block btn-success" id="add_new_btn" href="/constituent/create">
+                        <h3 class="box-title">Brgy. Captains List</h3>
+                        <a class="btn btn-block btn-success" id="add_new_btn" href="/brgy_captain/create">
                             Add New                    
                         </a>
                     </div>
-                    
+
                     <div class="box-body">
-                        <table id="dt_constituents" class="table table-bordered table-striped">
+                        <table id="dt_candidates" class="table table-bordered table-striped">
                             <thead>
                                 <tr>
-                                    <th>Last Name</th>
                                     <th>First Name</th>
-                                    <th>Voted Brgy. Captain</th>
-                                    <th>Has Unpaid Taxes</th>
-                                    <th>Has Record</th>
+                                    <th>Last Name</th>
                                     <th>Details</th>
                                     <th>Edit</th>
                                     <th>Delete</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($constituents as $c)
+                                @foreach($brgy_captains as $b)
                                 <tr>
-                                    <td>{{ $c->first_name }}</td>
-                                    <td>{{ $c->last_name }}</td>
-                                    <td>{{ $c->brgyCaptain->last_name or 'N/A' }}</td>
+                                    <td>{{ $b->first_name }}</td>
+                                    <td>{{ $b->last_name }}</td>
                                     <td>
-                                        @if ($c->has_unpaid_tax)
-                                            <span class="criminal-record">Has Unpaid Taxes</span> 
-                                        @else
-                                            None
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if ($c->has_record)
-                                            <span class="criminal-record">Has Criminal Record</span> 
-                                        @else
-                                            None
-                                        @endif
-                                    </td>
-                                    <td>
-                                        <a class="btn btn-block btn-info" href="/constituent/show/{{ $c->id }}">
+                                        <a class="btn btn-block btn-info" href="/brgy_captain/show/{{ $b->id }}">
                                             Details
                                         </a>
                                     </td>
                                     <td>   
-                                        <a class="btn btn-block btn-primary" href="/constituent/{{ $c->id }}">
+                                        <a class="btn btn-block btn-primary" href="/brgy_captain/{{ $b->id }}">
                                             Edit
                                         </a>
                                     </td>
                                     <td>
-                                        <form action="/constituent/{{ $c->id }}" method="POST">
+                                        <form action="/brgy_captain/{{ $b->id }}" method="POST">
                                             <input type="hidden" name="_method" value="DELETE">
                                             <input type="hidden" name="_token" value="{{ csrf_token() }}">
                                             <input class="btn btn-block btn-danger" type="submit" value="DELETE">
@@ -94,7 +76,7 @@
     
     <script>
         $(function () {
-            $("#dt_constituents").DataTable();
+            $("#dt_candidates").DataTable();
         });
     </script>
 @endsection

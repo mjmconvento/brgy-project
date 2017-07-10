@@ -1,6 +1,6 @@
 <div class="form-group">
     <label for="{{ $id }}" class="col-sm-{{ $label_size }} control-label">{{ $label }}</label>
     <div class="col-sm-{{ $input_size }}">
-        <textarea class="form-control" rows="3" name="{{ $id }}" id="{{ $id }}" placeholder="{{ $label }}" {{ $required or '' }}>{{ $value or '' }}</textarea>
+        <input type="number" class="form-control" id="{{ $id }}" name="{{ $id }}" placeholder="{{ $label }}" value="{{ $value or '' }}" {{ $required or '' }}>
     </div>
 </div>

@@ -4,9 +4,9 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class CriminalRecord extends Model
+class Tax extends Model
 {
-	protected $table = 'criminal_record';
+	protected $table = 'tax';
 
 	public function constituent(){
 		return $this->belongsTo('App\Constituent');
