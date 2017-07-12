@@ -1,7 +1,7 @@
 @extends('template')
 @section('additional_css')
-    <link rel="stylesheet" href="{!! asset('template_libraries/plugins/datatables/dataTables.bootstrap.css') !!}">  
-    <link rel="stylesheet" href="{!! asset('template_libraries/custom.css') !!}">    
+    <link rel="stylesheet" href="{!! asset('public/template_libraries/plugins/datatables/dataTables.bootstrap.css') !!}">  
+    <link rel="stylesheet" href="{!! asset('public/template_libraries/custom.css') !!}">    
 @endsection
 
 @section('content')
@@ -46,8 +46,8 @@
 @endsection
 
 @section('additional_js')
-    <script src="{!! asset('template_libraries/plugins/datatables/jquery.dataTables.min.js') !!}"></script>
-    <script src="{!! asset('template_libraries/plugins/datatables/dataTables.bootstrap.min.js') !!}"></script>
+    <script src="{!! asset('public/template_libraries/plugins/datatables/jquery.dataTables.min.js') !!}"></script>
+    <script src="{!! asset('public/template_libraries/plugins/datatables/dataTables.bootstrap.min.js') !!}"></script>
     <script>
         $(function () {
             $("#dt_voters").DataTable();

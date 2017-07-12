@@ -1,6 +1,6 @@
 @extends('template')
 @section('additional_css')
-    <link rel="stylesheet" href="{!! asset('template_libraries/custom.css') !!}">    
+    <link rel="stylesheet" href="{!! asset('public/template_libraries/custom.css') !!}">    
 @endsection
 
 @section('content')
