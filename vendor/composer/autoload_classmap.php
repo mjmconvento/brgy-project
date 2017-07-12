@@ -19,6 +19,7 @@ return array(
     'App\\Http\\Controllers\\ConstituentController' => $baseDir . '/app/Http/Controllers/ConstituentController.php',
     'App\\Http\\Controllers\\Controller' => $baseDir . '/app/Http/Controllers/Controller.php',
     'App\\Http\\Controllers\\CriminalRecordController' => $baseDir . '/app/Http/Controllers/CriminalRecordController.php',
+    'App\\Http\\Controllers\\ProfileController' => $baseDir . '/app/Http/Controllers/ProfileController.php',
     'App\\Http\\Controllers\\TaxController' => $baseDir . '/app/Http/Controllers/TaxController.php',
     'App\\Http\\Kernel' => $baseDir . '/app/Http/Kernel.php',
     'App\\Http\\Middleware\\Authenticate' => $baseDir . '/app/Http/Middleware/Authenticate.php',
