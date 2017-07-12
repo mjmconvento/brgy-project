@@ -72,10 +72,12 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <form action="/constituent/{{ $c->id }}" method="POST">
+                                        <a class="btn btn-block btn-danger delete-cons" data-id="{{ $c->id }}" type="submit">DELETE</a>
+
+                                        <form class="hidden" action="/constituent/{{ $c->id }}" method="POST">
                                             <input type="hidden" name="_method" value="DELETE">
                                             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                            <input class="btn btn-block btn-danger" type="submit" value="DELETE">
+                                            <input class="btn btn-block btn-danger delete-hidden-cons" type="submit" value="DELETE">
                                         </form>
                                     </td>
                                 </tr>
@@ -86,12 +88,17 @@
                 </div>
             </div>
         </div>
+
+        @include('Templates.delete_modal')
+
     </section>
 @endsection
 
 @section('additional_js')
     <script src="{!! asset('public/template_libraries/plugins/datatables/jquery.dataTables.min.js') !!}"></script>
     <script src="{!! asset('public/template_libraries/plugins/datatables/dataTables.bootstrap.min.js') !!}"></script>
+    <script src="{!! asset('public/js/constituents.js') !!}"></script>
+
     
     <script>
         $(function () {

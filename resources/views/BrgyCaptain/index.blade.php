@@ -54,10 +54,12 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <form action="/brgy_captain/{{ $b->id }}" method="POST">
+                                        <a class="btn btn-block btn-danger delete-brgy" data-id="{{ $b->id }}" type="submit">DELETE</a>
+
+                                        <form class="hidden" action="/brgy_captain/{{ $b->id }}" method="POST">
                                             <input type="hidden" name="_method" value="DELETE">
                                             <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                                            <input class="btn btn-block btn-danger" type="submit" value="DELETE">
+                                            <input class="btn btn-block btn-danger delete-hidden-brgy" type="submit" value="DELETE">
                                         </form>
                                     </td>
                                 </tr>
@@ -68,13 +70,15 @@
                 </div>
             </div>
         </div>
+
+        @include('Templates.delete_modal')
     </section>
 @endsection
 
 @section('additional_js')
     <script src="{!! asset('public/template_libraries/plugins/datatables/jquery.dataTables.min.js') !!}"></script>
     <script src="{!! asset('public/template_libraries/plugins/datatables/dataTables.bootstrap.min.js') !!}"></script>
-    
+    <script src="{!! asset('public/js/brgy.js') !!}"></script>
     <script>
         $(function () {
             $("#dt_candidates").DataTable();

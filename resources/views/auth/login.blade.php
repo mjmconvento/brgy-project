@@ -46,12 +46,15 @@
                             <button type="submit" class="btn btn-primary btn-block btn-flat">Sign In</button>
                         </div>
                     </div>
+                <!-- 
                     <div class="social-auth-links text-center">
                         <p>- OR -</p>
                     </div>
                     <center>
                         <a href="/auth/register" class="text-center">Register a new membership</a>
                     </center>
+
+                 -->    
                 </form>
             </div>
         </div>
