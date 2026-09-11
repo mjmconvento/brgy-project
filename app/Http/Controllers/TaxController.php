@@ -2,129 +2,87 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use App\Tax as Tax;
-use App\Constituent as Constituent;
-use App\Http\Requests;
-use App\Http\Controllers\Controller;
-use DateTime;
+use App\Enums\TaxStatus;
+use App\Http\Requests\TaxRequest;
+use App\Models\Constituent;
+use App\Models\Tax;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
+/**
+ * Nested resource: tax records always belong to a constituent.
+ *
+ * Registered with `->shallow()`, so `create`/`store` take the parent
+ * constituent while `edit`/`update`/`destroy` bind the tax record directly.
+ */
 class TaxController extends Controller
 {
-
     /**
-     *
-     * @return \Illuminate\Http\Response
+     * Show the create form for a constituent's new tax record.
      */
-    public function create($cons_id)
+    public function create(Constituent $constituent): View
     {
-        $months = $this->get_months();
-        return view('Tax/add_edit',[ 
-            'cons_id' => $cons_id, 
-            'method' => 'add',
-            'months' => $months
+        return view('taxes.create', [
+            'constituent' => $constituent,
+            'months' => Tax::monthOptions(),
+            'statuses' => TaxStatus::cases(),
         ]);
     }
 
     /**
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Persist a new tax record for the constituent.
      */
-    public function store(Request $request, $cons_id)
+    public function store(TaxRequest $request, Constituent $constituent): RedirectResponse
     {
-        $input = $request->all();
-        $tax = new Tax;
-        $cons_id = $input["cons_id"];
-        $this->save_data($input, $tax, $cons_id);
-        $this->check_has_unpaid_tax($cons_id);
+        $constituent->taxes()->create($request->validated());
 
-        return redirect()->action('ConstituentController@show', [$cons_id])->with('status', 'Tax Added')
-            ->with('active_tab', 'tax');
+        return $this->backToConstituent($constituent, 'Tax record added.');
     }
 
+    /**
+     * Show the edit form.
+     */
+    public function edit(Tax $tax): View
+    {
+        $tax->load('constituent');
+
+        return view('taxes.edit', [
+            'tax' => $tax,
+            'months' => Tax::monthOptions(),
+            'statuses' => TaxStatus::cases(),
+        ]);
+    }
 
     /**
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Persist changes to a tax record.
      */
-    public function destroy($id)
+    public function update(TaxRequest $request, Tax $tax): RedirectResponse
     {
-        $tax = Tax::find($id);
-        $cons_id =  $tax->constituent->id;
+        $tax->update($request->validated());
+
+        return $this->backToConstituent($tax->constituent, 'Tax record updated.');
+    }
+
+    /**
+     * Delete a tax record.
+     */
+    public function destroy(Tax $tax): RedirectResponse
+    {
+        $constituent = $tax->constituent;
+
         $tax->delete();
-        $this->check_has_unpaid_tax($cons_id);
 
-        return redirect()->action('ConstituentController@show', [$cons_id])->with('status', 'Tax Record Deleted')
-            ->with('active_tab', 'tax');
+        return $this->backToConstituent($constituent, 'Tax record deleted.');
     }
-
 
     /**
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Return to the constituent profile with the tax tab active.
      */
-    public function edit($cons_id, $id)
+    private function backToConstituent(Constituent $constituent, string $status): RedirectResponse
     {
-        $tax = Tax::find($id);
-        $months = $this->get_months();
-        return view('Tax/add_edit',[ 
-            'tax' => $tax, 
-            'cons_id' => $cons_id, 
-            'months' => $months ,
-            'method' => 'edit'
-        ]);
+        return redirect()
+            ->route('constituents.show', $constituent)
+            ->with('status', $status)
+            ->with('active_tab', 'taxes');
     }
-
-
-    /**
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $cons_id, $id)
-    {
-        $input = $request->all();
-        $tax = Tax::find($id);
-        $this->save_data($input, $tax, $cons_id);
-        $this->check_has_unpaid_tax($cons_id);
-        return redirect()->action('ConstituentController@show', [$cons_id])->with('status', 'Tax Updated')
-            ->with('active_tab', 'tax');
-    }
-
-    public function check_has_unpaid_tax($cons_id)
-    {
-        $constituent = Constituent::find($cons_id);
-        $count = 0;
-
-        foreach ($constituent->tax as $c)
-            if($c->status == "Unpaid")
-                $count++;
-
-        if(!$count)
-            $constituent->has_unpaid_tax = false;
-        else
-            $constituent->has_unpaid_tax = true;
-
-        $constituent->save();
-    }
-
-    public function save_data($input, $tax, $cons_id)
-    {
-        $tax->constituent_id = $cons_id;
-        $tax->amount = $input["amount"];
-        $tax->payment_month = $input["month"];
-        $tax->payment_year = $input["year"];
-        $tax->status = $input["status"];
-        $tax->save();
-    }
-
-    public function get_months()
-    {
-        return array('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December');
-    }
-
 }

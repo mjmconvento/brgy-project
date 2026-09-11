@@ -1,72 +1,37 @@
-<!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>AdminLTE 2 | Registration Page</title>
-        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
-        @include('Templates.register_css')
-    </head>
-    <body class="hold-transition register-page">
-        <div class="register-box">
-            <div class="register-logo">
-                <a href=""><b>B</b>rgy <b>P</b>roject <b>R</b>egistration</a>
-            </div>
+<x-layouts.guest title="Register">
+    <h1 class="text-lg font-semibold text-slate-900">Create an account</h1>
+    <p class="mt-1 text-sm text-slate-600">Register to start profiling constituents.</p>
 
-            @if (count($errors) > 0)
-                <div class="alert alert-danger alert-dismissable">
-                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    <h4><i class="icon fa fa-ban"></i> Error!</h4>
-                    <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                    </ul>
-                </div>
-            @endif
+    <form method="POST" action="{{ route('register') }}" class="mt-6 space-y-5">
+        @csrf
 
-            <div class="register-box-body">
-                <p class="login-box-msg">Register a new membership</p>
-                <form action="register" method="POST">
-                    {!! csrf_field() !!}
-                    <div class="form-group has-feedback">
-                        <input type="text" name="first_name" class="form-control" placeholder="First name">
-                        <span class="glyphicon glyphicon-user form-control-feedback"></span>
-                    </div>
-                    <div class="form-group has-feedback">
-                        <input type="text" name="middle_name" class="form-control" placeholder="Middle name">
-                        <span class="glyphicon glyphicon-user form-control-feedback"></span>
-                    </div>
-                    <div class="form-group has-feedback">
-                        <input type="text" name="last_name" class="form-control" placeholder="Last name">
-                        <span class="glyphicon glyphicon-user form-control-feedback"></span>
-                    </div>
-                    <div class="form-group has-feedback">
-                        <input type="email" name="email" class="form-control" placeholder="Email">
-                        <span class="glyphicon glyphicon-envelope form-control-feedback"></span>
-                    </div>
-                    <div class="form-group has-feedback">
-                        <input type="password" name="password" class="form-control" placeholder="Password">
-                        <span class="glyphicon glyphicon-lock form-control-feedback"></span>
-                    </div>
-                    <div class="form-group has-feedback">
-                        <input type="password" name="password_confirmation" class="form-control" placeholder="Retype password">
-                        <span class="glyphicon glyphicon-log-in form-control-feedback"></span>
-                    </div>
-                    <div class="row">
-                        <div class="col-xs-12">
-                            <button type="submit" class="btn btn-primary btn-block btn-flat">Register</button>
-                        </div>
-                    </div>
-                </form>
-                <br/>
-                <center>
-                    <a href="login" class="text-center">I already have a membership</a>                
-                </center>
-            </div>
+        <x-form.errors />
+
+        <div class="grid gap-5 sm:grid-cols-3">
+            <x-form.input name="first_name" label="First name" :required="true" autocomplete="given-name" autofocus />
+
+            <x-form.input name="middle_name" label="Middle name" autocomplete="additional-name" hint="Optional." />
+
+            <x-form.input name="last_name" label="Last name" :required="true" autocomplete="family-name" />
         </div>
 
-    @include('Templates.register_js')
+        <x-form.input name="email" label="Email" type="email" :required="true" autocomplete="username" />
 
-  </body>
-</html>
+        <x-form.input name="password" label="Password" type="password" :required="true" autocomplete="new-password" />
+
+        <x-form.input
+            name="password_confirmation"
+            label="Confirm password"
+            type="password"
+            :required="true"
+            autocomplete="new-password"
+        />
+
+        <x-ui.button type="submit" class="w-full">Register</x-ui.button>
+    </form>
+
+    <p class="mt-6 text-center text-sm text-slate-600">
+        Already registered?
+        <a href="{{ route('login') }}" class="font-semibold text-brand-700 hover:text-brand-900">Log in</a>
+    </p>
+</x-layouts.guest>

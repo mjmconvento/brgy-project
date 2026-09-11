@@ -1,0 +1,17 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 6
+
+    # `tests/` is deliberately excluded: inside a Pest `it()` closure PHPStan
+    # resolves `$this` to Pest\PendingCalls\TestCall rather than the bound
+    # TestCase, so every `$this->get(...)` is reported as an undefined method.
+    # There is no shipped extension that models that binding, and baselining
+    # ~40 false positives would bury real findings.
+    paths:
+        - app
+        - database
+        - routes
+
+    tmpDir: storage/framework/cache/phpstan

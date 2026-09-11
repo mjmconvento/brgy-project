@@ -2,119 +2,121 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ConstituentRequest;
+use App\Models\BarangayCaptain;
+use App\Models\Constituent;
+use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use App\Constituent as Constituent;
-use App\BrgyCaptain as BrgyCaptain;
-use App\Http\Requests;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Auth;
 
 class ConstituentController extends Controller
 {
     /**
-     *
-     * @return \Illuminate\Http\Response
+     * Number of rows per listing page.
      */
-    public function index()
-    {
-        // $user = Auth::user();
-        // dd($user->name);
-        $constituents = Constituent::all();
-        return view('Constituents/index', ['constituents' => $constituents ]);
-    }
+    private const PER_PAGE = 15;
 
     /**
-     *
-     * @return \Illuminate\Http\Response
+     * Paginated, searchable listing of constituents.
      */
-    public function create()
+    public function index(Request $request): View
     {
-        $brgy_captains = BrgyCaptain::all();
-        return view('Constituents/add_edit', [
-            'method' => 'add', 
-            'brgy_captains' => $brgy_captains
+        $search = $request->string('search')->trim()->toString() ?: null;
+
+        return view('constituents.index', [
+            'search' => $search,
+            'constituents' => Constituent::query()
+                ->withListingAggregates()
+                ->search($search)
+                ->orderedByName()
+                ->paginate(self::PER_PAGE)
+                ->withQueryString(),
         ]);
     }
 
     /**
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * Show the create form.
      */
-    public function store(Request $request)
+    public function create(): View
     {
-        $input = $request->all();
-        $constituent = new Constituent;
-        $this->save_data($input, $constituent);
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Added');
-    }
-
-    /**
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        $constituent = Constituent::find($id);
-        return view('Constituents/show', [ 
-            'constituent' => $constituent, 
+        return view('constituents.create', [
+            'barangayCaptains' => $this->captainOptions(),
         ]);
     }
 
     /**
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Persist a new constituent.
      */
-    public function edit($id)
+    public function store(ConstituentRequest $request): RedirectResponse
     {
-        $constituent = Constituent::find($id);
-        $brgy_captains = BrgyCaptain::all();
+        $constituent = Constituent::create($request->validated());
 
-        return view('Constituents/add_edit', [ 
-            'constituent' => $constituent, 
-            'method' => 'edit', 
-            'brgy_captains' => $brgy_captains 
+        return redirect()
+            ->route('constituents.show', $constituent)
+            ->with('status', 'Constituent added.');
+    }
+
+    /**
+     * Show one constituent with their tax and criminal records.
+     */
+    public function show(Constituent $constituent): View
+    {
+        $constituent->load('barangayCaptain');
+
+        // Loaded explicitly so each collection arrives in the order the page
+        // renders it, and so the derived `has_*` accessors read from memory.
+        $constituent->setRelation('taxes', $constituent->taxes()->latestPeriodFirst()->get());
+        $constituent->setRelation('criminalRecords', $constituent->criminalRecords()->latestFirst()->get());
+
+        return view('constituents.show', [
+            'constituent' => $constituent,
         ]);
     }
 
     /**
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Show the edit form.
      */
-    public function update(Request $request, $id)
+    public function edit(Constituent $constituent): View
     {
-        $input = $request->all();
-        $constituent = Constituent::find($id);
-        $this->save_data($input, $constituent);
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Updated');
-
+        return view('constituents.edit', [
+            'constituent' => $constituent,
+            'barangayCaptains' => $this->captainOptions(),
+        ]);
     }
 
     /**
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Persist changes to an existing constituent.
      */
-    public function destroy($id)
+    public function update(ConstituentRequest $request, Constituent $constituent): RedirectResponse
     {
-        $constituent = Constituent::find($id);
+        $constituent->update($request->validated());
+
+        return redirect()
+            ->route('constituents.show', $constituent)
+            ->with('status', 'Constituent updated.');
+    }
+
+    /**
+     * Delete a constituent. Their tax and criminal records cascade away through
+     * the foreign keys declared in the migrations.
+     */
+    public function destroy(Constituent $constituent): RedirectResponse
+    {
         $constituent->delete();
 
-        return redirect()->action('ConstituentController@index')->with('status', 'Record Deleted');
+        return redirect()
+            ->route('constituents.index')
+            ->with('status', 'Constituent deleted.');
     }
 
-
-    public function save_data($input, $constituent)
+    /**
+     * Captains offered by the create/edit form's select.
+     *
+     * @return Collection<int, BarangayCaptain>
+     */
+    private function captainOptions(): Collection
     {
-        $constituent->first_name = $input['first_name'];
-        $constituent->middle_name = $input['middle_name'];
-        $constituent->last_name = $input['last_name'];
-        $constituent->address = $input['address'];
-        $constituent->brgy_captain_id = $input['brgy_captain'];
-        $constituent->save();
+        return BarangayCaptain::query()->orderedByName()->get();
     }
 }

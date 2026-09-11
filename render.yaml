@@ -1,0 +1,96 @@
+# Render Blueprint — Barangay Profiling System.
+# See ai_docs/deployment.md for the full walkthrough.
+#
+# One service. The app is server-rendered Blade, so there is no separate front
+# end to host: nginx inside this container serves the Vite build output from
+# public/build itself. The database is Neon (managed Postgres); Render's own
+# free Postgres expires 30 days after creation, so it is deliberately not used.
+services:
+    - type: web
+      name: brgy-profiling
+      runtime: docker
+      plan: free
+      region: singapore
+
+      # Multi-stage build: Render builds the FINAL stage, which is `render` —
+      # nginx + php-fpm under supervisord, answering HTTP on $PORT. The `app`
+      # stage above it speaks FastCGI on 9000 and would be unreachable here.
+      # Keep `render` last in the Dockerfile.
+      dockerfilePath: ./Dockerfile
+      dockerContext: .
+
+      # Laravel's built-in health route (bootstrap/app.php, health: '/up'),
+      # served through php-fpm so a dead fpm fails the check instead of
+      # silently returning 502s.
+      healthCheckPath: /up
+
+      envVars:
+          # Render injects PORT itself. Declared only to document that the image
+          # reads it: docker/php/entrypoint.sh renders it into the nginx vhost.
+          - key: PORT
+            value: 10000
+
+          - key: APP_NAME
+            value: Barangay Profiling System
+          - key: APP_ENV
+            value: production
+          - key: APP_DEBUG
+            value: false
+          - key: APP_TIMEZONE
+            value: Asia/Manila
+
+          # No writable log directory worth keeping on a container platform, and
+          # this puts Laravel's log into `render logs` next to nginx and php-fpm.
+          - key: LOG_CHANNEL
+            value: stderr
+          - key: LOG_LEVEL
+            value: info
+
+          - key: DB_CONNECTION
+            value: pgsql
+
+          # Sessions in Postgres, cache on local disk, queue inline.
+          #
+          # SESSION_DRIVER=database and not `file`: Render's free plan has no
+          # persistent disk and spins the instance down after 15 idle minutes,
+          # so file sessions log every user out on each cold start. The database
+          # driver costs one row read plus one write per request and does not
+          # poll, so it does not hold Neon's compute awake.
+          #
+          # CACHE_STORE and QUEUE_CONNECTION deliberately avoid `database`: a
+          # queue:work daemon polls the jobs table every second, which would
+          # keep Neon's compute from ever scaling to zero and burn the 100
+          # CU-hour monthly allowance in roughly two weeks. This app queues
+          # nothing, so `sync` is free of consequence.
+          - key: SESSION_DRIVER
+            value: database
+          - key: CACHE_STORE
+            value: file
+          - key: QUEUE_CONNECTION
+            value: sync
+
+          # Left false on purpose. Neon has two endpoints and this service is
+          # configured with the POOLED one, which runs PgBouncer in transaction
+          # mode — it drops the prepared statements and session state that
+          # `php artisan migrate` relies on. Migrations are an explicit step run
+          # against Neon's DIRECT endpoint; see ai_docs/deployment.md.
+          #
+          # Consequence: the first deploy 500s until you have run them, because
+          # SESSION_DRIVER=database needs the `sessions` table. Migrate first.
+          - key: RUN_MIGRATIONS
+            value: false
+
+          # Prompted for on Blueprint sync and stored encrypted. Nothing
+          # sensitive and nothing environment-specific belongs in this file.
+          #
+          # APP_KEY  php artisan key:generate --show   (must be set, or the
+          #          entrypoint writes a fresh one per container and every
+          #          existing session and signed URL breaks on each deploy)
+          # APP_URL  this service's own public URL, https://
+          # DB_URL   Neon POOLED connection string, with ?sslmode=require
+          - key: APP_KEY
+            sync: false
+          - key: APP_URL
+            sync: false
+          - key: DB_URL
+            sync: false

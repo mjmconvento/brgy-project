@@ -2,52 +2,32 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ProfileRequest;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
-use App\Http\Controllers\Controller;
-use App\User;
-use DateTime;
 
 class ProfileController extends Controller
 {
-
-
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Show the signed-in user's profile form.
      */
-    public function edit($id)
+    public function edit(Request $request): View
     {
-
-        $user = User::find($id);
-        return view('Profile/edit', [ 
-            'user' => $user
+        return view('profile.edit', [
+            'user' => $request->user(),
         ]);
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * Update the signed-in user's own profile.
      */
-    public function update(Request $request, $id)
+    public function update(ProfileRequest $request): RedirectResponse
     {
+        $request->user()->update($request->validated());
 
-
-        $user = User::find($id);
-        $input = $request->all();
-        $user->first_name = $input["first_name"];
-        $user->middle_name = $input["middle_name"];
-        $user->last_name = $input["last_name"];
-        $user->updated_at = new DateTime();
-        $user->save();
-
-        return redirect()->action('ConstituentController@index')->with('status', 'Profile Record Updated');
+        return redirect()
+            ->route('profile.edit')
+            ->with('status', 'Profile updated.');
     }
-
 }

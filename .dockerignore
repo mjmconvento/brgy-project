@@ -1,0 +1,65 @@
+# Keep the build context small and reproducible.
+#
+# Nothing listed here is needed by any COPY in the Dockerfile. In particular
+# composer.json / composer.lock, package.json / package-lock.json, .npmrc,
+# vite.config.js, artisan, app/, bootstrap/, config/, database/, public/,
+# resources/, routes/, storage/ (structure), tests/ and docker/ are all kept.
+
+# --- VCS / CI --------------------------------------------------------------
+.git
+.gitignore
+.gitattributes
+.github
+
+# --- dependencies (installed inside the build stages) ----------------------
+node_modules
+vendor
+
+# --- build output (produced by the assets stage) ---------------------------
+public/build
+public/hot
+public/storage
+public/fonts-manifest.dev.json
+
+# --- runtime state ---------------------------------------------------------
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/pail
+.config/psysh
+storage/*.key
+*.log
+
+# Laravel's package manifests, written by `composer install` on the host WITH
+# dev dependencies. Copying them into the image makes it boot against a
+# production vendor/ that has no laravel/pail or laravel/sail, and the container
+# dies with 'Class "Laravel\Pail\PailServiceProvider" not found' before it
+# serves a single request. They are regenerated at runtime.
+bootstrap/cache/*.php
+
+# --- secrets: every .env variant except the committed template -------------
+.env
+.env.*
+!.env.example
+
+# --- editor / OS noise -----------------------------------------------------
+.idea
+.vscode
+.zed
+.nova
+.cursor
+.codex
+.fleet
+.DS_Store
+Thumbs.db
+
+# --- local tooling caches --------------------------------------------------
+.phpunit.cache
+.phpunit.result.cache
+.phpactor.json
+_ide_helper.php
+auth.json
+Homestead.json
+Homestead.yaml

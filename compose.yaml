@@ -1,0 +1,209 @@
+# Barangay Profiling System — local development / production-ish stack.
+# Compose Specification (docker compose v2). There is deliberately no
+# top-level `version:` key: it has been obsolete since Compose v2.
+#
+#   docker compose up -d              # app + nginx + postgres + redis + workers
+#   docker compose --profile dev up -d # ... plus vite (node) and mailpit
+#   make up                           # shorthand for the line above
+
+# ---------------------------------------------------------------------------
+# Shared definition for every container that runs application PHP code:
+# the web (php-fpm) container, the queue worker and the scheduler.
+# ---------------------------------------------------------------------------
+x-app: &app
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: app
+    args:
+      UID: ${UID:-1000}
+      GID: ${GID:-1000}
+  image: brgy-project/app:latest
+  env_file:
+    - path: .env
+      required: false
+  environment:
+    # Service discovery inside the compose network. Declared here rather than
+    # only in .env so the same .env keeps working for a non-Docker run.
+    DB_HOST: postgres
+    DB_PORT: 5432
+    REDIS_HOST: redis
+    REDIS_PORT: 6379
+    MAIL_HOST: mailpit
+    MAIL_PORT: 1025
+    RUN_MIGRATIONS: ${RUN_MIGRATIONS:-false}
+    PHP_OPCACHE_VALIDATE_TIMESTAMPS: ${PHP_OPCACHE_VALIDATE_TIMESTAMPS:-1}
+  volumes:
+    - .:/var/www/html
+  networks:
+    - brgy
+  depends_on:
+    postgres:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+
+services:
+  # -------------------------------------------------------------------------
+  # PHP-FPM — serves the application to nginx over TCP 9000
+  # -------------------------------------------------------------------------
+  app:
+    <<: *app
+    restart: unless-stopped
+
+  # -------------------------------------------------------------------------
+  # nginx — the only published HTTP entrypoint
+  # -------------------------------------------------------------------------
+  nginx:
+    image: nginx:1.31-alpine
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:80"
+    volumes:
+      - .:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - brgy
+    depends_on:
+      - app
+
+  # -------------------------------------------------------------------------
+  # PostgreSQL 18
+  # -------------------------------------------------------------------------
+  postgres:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-brgy}
+      # Must stay `brgy`: docker/postgres/init/01-create-testing-database.sql
+      # sets the test database's owner and cannot read this variable.
+      POSTGRES_USER: ${DB_USERNAME:-brgy}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+      # Applied to `initdb` on first boot only. The C collation with UTF-8
+      # encoding keeps ORDER BY byte-deterministic, so `orderedByName` sorts
+      # identically here and on any managed Postgres.
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    # Postgres reads no conf.d by default, so development tuning goes here
+    # rather than into a mounted postgresql.conf. Durability is traded away
+    # deliberately: this data is seedable in under three seconds.
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - work_mem=8MB
+      - -c
+      - max_connections=100
+      - -c
+      - synchronous_commit=off
+      - -c
+      - log_min_duration_statement=2000
+    ports:
+      - "${DB_PORT_FORWARD:-5432}:5432"
+    volumes:
+      # postgres:18 sets PGDATA=/var/lib/postgresql/18/docker and declares the
+      # volume one level up, at /var/lib/postgresql — mounting the old
+      # /var/lib/postgresql/data would silently persist nothing.
+      - postgres-data:/var/lib/postgresql
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - brgy
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"']
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  # -------------------------------------------------------------------------
+  # Redis 8.10 — cache, sessions and queue backend
+  # -------------------------------------------------------------------------
+  redis:
+    image: redis:8.10-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT_FORWARD:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - brgy
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
+  # -------------------------------------------------------------------------
+  # Queue worker — drains jobs, restarts itself hourly (--max-time)
+  # -------------------------------------------------------------------------
+  queue:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "--tries=3", "--max-time=3600", "--sleep=3"]
+    restart: unless-stopped
+    # Inherited from the image, but this container never listens on 9000.
+    healthcheck:
+      disable: true
+    # Let an in-flight job finish before the container dies.
+    stop_signal: SIGTERM
+    stop_grace_period: 35s
+
+  # -------------------------------------------------------------------------
+  # Scheduler — the Laravel 13 long-running scheduler
+  # -------------------------------------------------------------------------
+  scheduler:
+    <<: *app
+    command: ["php", "artisan", "schedule:work"]
+    restart: unless-stopped
+    healthcheck:
+      disable: true
+    stop_signal: SIGTERM
+    stop_grace_period: 35s
+
+  # -------------------------------------------------------------------------
+  # Vite dev server (profile: dev)
+  # -------------------------------------------------------------------------
+  node:
+    image: node:24-alpine
+    profiles: ["dev"]
+    working_dir: /var/www/html
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    environment:
+      npm_config_update_notifier: "false"
+      # laravel-vite-plugin writes public/hot with the URL the *browser* must
+      # use. Inside the container the dev server binds 0.0.0.0, which is not a
+      # usable client host; LARAVEL_SAIL makes the plugin advertise
+      # http://localhost:<port> instead (it only does this when vite.config.js
+      # does not pin server.host, which it does not).
+      LARAVEL_SAIL: "1"
+    ports:
+      - "${VITE_PORT:-5173}:5173"
+    volumes:
+      - .:/var/www/html
+    networks:
+      - brgy
+
+  # -------------------------------------------------------------------------
+  # Mailpit — catches every outbound mail (profile: dev)
+  # -------------------------------------------------------------------------
+  mailpit:
+    image: axllent/mailpit:v1.31
+    profiles: ["dev"]
+    restart: unless-stopped
+    environment:
+      MP_MAX_MESSAGES: "500"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "${MAILPIT_PORT:-8025}:8025"
+    networks:
+      - brgy
+
+volumes:
+  postgres-data:
+  redis-data:
+
+networks:
+  brgy:
+    driver: bridge
