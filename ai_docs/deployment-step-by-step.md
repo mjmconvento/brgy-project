@@ -139,7 +139,35 @@ ORDER BY tablename;
 
 You should see `users`, `sessions`, `constituents`, `barangay_captains`, `taxes`, and `criminal_records`, along with Laravel's other tables. Do not manually create these tables in the Neon UI.
 
-**Never run `make fresh`, `migrate:fresh`, or the test suite against Neon.** They can delete data. Skip `db:seed` for this walkthrough: it creates known-password demo accounts. Your local sample records are **not** copied automatically; the new site starts empty.
+**Never run `make fresh`, `migrate:fresh`, or the test suite against Neon.** They can delete data. Your laptop's local database is never copied automatically: without the optional block below, the new site starts empty.
+
+### Optional: load the demo data set
+
+Recommended for a demo. In the **same terminal tab** where `DB_DIRECT` is set (rerun the `pbpaste` block from above if you opened a new one), run this **once**:
+
+```bash
+docker compose run --rm --no-deps -T \
+  -e APP_ENV=production \
+  -e APP_CONFIG_CACHE=/tmp/brgy-deploy-config.php \
+  -e DB_CONNECTION=pgsql \
+  -e DB_URL="${DB_DIRECT:?Copy the direct Neon URL and run the pbpaste command first}" \
+  --entrypoint php app artisan db:seed --force --no-interaction
+```
+
+It runs from your laptop's development image because the production image deliberately has no data generator. **Success:** progress bars for captains, constituents, taxes, and criminal records, then a `Database\Seeders\BarangaySeeder ... DONE` line. Expect well under a minute.
+
+What it writes, all fake: 60 barangay captains, 3,200 residents, roughly 11,000 tax records, roughly 950 criminal records (about 12 MB of Neon's 0.5 GB), and two demo logins:
+
+| Email | Password |
+|---|---|
+| `admin@brgy.local` | `password` |
+| `test1@user.com` | `password112233` |
+
+Running it a second time stops at once with a duplicate-email error for `admin@brgy.local` and adds nothing — it cannot double the data, and it does not reset anything either. Those passwords are published in this repository, which is fine for a throwaway demo. When you want the demo logins gone, run this in the Neon **SQL Editor** from above:
+
+```sql
+DELETE FROM users WHERE email IN ('admin@brgy.local', 'test1@user.com');
+```
 
 ## 6. Create the Render website using the Blueprint
 
@@ -176,9 +204,9 @@ Render assigns a unique `onrender.com` address. It may add a suffix, so **do not
 2. Copy the public `https://...onrender.com` link shown on the service page.
 3. Open **Environment → Environment Variables**. Find `APP_URL` and edit its value to that exact address, with **no trailing slash and no `/login`**.
 4. Choose **Save and deploy**. Do not choose **Save only**; the running container needs the new value. If the value already matches, no change or redeploy is needed.
-5. Once Live, open the actual address with `/register` appended.
+5. Once Live, open the actual address with `/register` appended. If you loaded the demo data, you can instead open `/login` and sign in as `admin@brgy.local` / `password`, then skip to item 7.
 6. Enter your first and last name, optional middle name, your email in lowercase, and a unique password with its confirmation. Click **Register**.
-7. You should land on the dashboard. Zero residents/taxes/records are expected. Use this account to log in; your laptop's seeded accounts do not exist in this fresh database.
+7. You should land on the dashboard. With the demo data it shows 3,200 residents and populated charts; without it, zero residents/taxes/records are expected. Either way, your laptop's own local accounts do not exist in this database.
 
 **Reminder:** other people can also register. This walkthrough does not secure public sign-up. Do not enter real resident information yet.
 
@@ -191,7 +219,7 @@ Render assigns a unique `onrender.com` address. It may add a suffix, so **do not
    | Field | Value |
    |---|---|
    | First name | `Demo` |
-   | Last name | `Cruz` |
+   | Last name | `Sample` |
    | Street | `Test Street` |
    | Barangay | `Test Barangay` |
    | City or municipality | `Test City` |
@@ -200,7 +228,7 @@ Render assigns a unique `onrender.com` address. It may add a suffix, so **do not
    | Voted barangay captain | Leave **None** |
 
 4. Click **Save Constituent**. Expect the profile page and `Constituent added.`
-5. Return to **Constituents**, search for **`cruz`** in lowercase, and confirm **Demo Cruz** appears.
+5. Return to **Constituents**, search for **`sample`** in lowercase, and confirm **Sample, Demo** appears. The name is stored capitalised, so this also proves the case-insensitive search works on Neon.
 6. Delete that fake record and confirm the deletion. This exercises a real database write, read/search, and delete.
 
 You are done when login and this round trip work. Free Render services sleep after 15 idle minutes; the next visit can take about a minute. Slow wake-up is not a reason to recreate the database or generate another app key.
@@ -224,7 +252,8 @@ For future schema changes, repeat step 5 using the new code **before deploying c
 | `relation "sessions" does not exist` | Run step 5. Ensure the migration URL and Render's URL use the **same Neon branch and database**. |
 | Render is Live but the app returns 500 | Web service → **Logs**. Check `APP_KEY`, `DB_URL`, and the migration result; Live/`/up` alone does not verify the database. |
 | Login sends you to the wrong hostname | Repeat step 7 with the address Render actually assigned. |
-| Dashboard is empty | Expected: this guide does not seed or transfer your laptop's data. |
+| Dashboard is empty | You skipped the optional demo data in step 5. Run that block once; the site never copies your laptop's local database. |
+| Seeder stops with `duplicate key ... users_email_unique` | The demo data is already loaded; nothing was added. If you had registered `admin@brgy.local` yourself before seeding, the bulk data was never loaded — register with a different email, then run the seeder again. |
 | App fails just after editing an environment variable | Confirm you used **Save and deploy**, not **Save only**, and wait for Live. |
 
 ## Provider references
