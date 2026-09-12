@@ -38,7 +38,7 @@ end, all running in Docker.
 | Area | Capability |
 |---|---|
 | **Dashboard** | Landing page with headline figures and five charts: paid vs unpaid tax over the last 12 billing periods, tax records by status, outstanding tax by barangay, constituents by city, and votes per barangay captain. |
-| **Authentication** | Email/password login with session fixation protection and per-email + IP login throttling. Self-service registration with **email verification**: the link is emailed on sign-up and the application stays closed until it is clicked (see [ai_docs/email-verification.md](ai_docs/email-verification.md)). |
+| **Authentication** | Email/password login with session fixation protection and per-email + IP login throttling. Self-service registration with **email verification**: the link is emailed on sign-up and the application stays closed until it is clicked. |
 | **Constituents** | Full CRUD, paginated 15 to a page and searchable across every name and address column. Clicking a row opens the profile. |
 | **Barangay captains** | Full CRUD for candidates, plus a paginated roster of the constituents who voted for each. |
 | **Structured addresses** | House number (optional), street, barangay, city, and country are separate columns, so the data can be grouped and charted. |
@@ -126,8 +126,8 @@ The image is a four-stage build:
    already built into the base image). Runs as the non-root `app` user, speaks FastCGI
    on 9000, and is the stage `compose.yaml` targets. Final image is ~156 MB.
 4. **`render`** — the deployable artifact: the same runtime plus nginx and supervisord,
-   answering HTTP on `$PORT` in one container. See [`ai_docs/deployment.md`](ai_docs/deployment.md).
-   It is the final stage, so a bare `docker build .` produces it.
+   answering HTTP on `$PORT` in one container. It is the final stage, so a bare
+   `docker build .` produces it.
 
 ---
 
