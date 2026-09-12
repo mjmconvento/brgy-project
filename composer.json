@@ -9,7 +9,9 @@
         "php": "^8.4",
         "laravel/framework": "^13.30",
         "laravel/tinker": "^3.0",
-        "predis/predis": "^3.2"
+        "predis/predis": "^3.2",
+        "symfony/brevo-mailer": "^8.1",
+        "symfony/http-client": "^8.1"
     },
     "require-dev": {
         "fakerphp/faker": "^1.24",

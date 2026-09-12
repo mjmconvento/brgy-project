@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Concerns\HasPersonName;
 use Database\Factories\UserFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,6 +14,10 @@ use Illuminate\Support\Carbon;
 
 /**
  * A barangay staff account.
+ *
+ * Implementing `MustVerifyEmail` is what makes the framework send the
+ * verification link on the `Registered` event and lets the `verified` route
+ * middleware gate the application until it is clicked.
  *
  * @property int $id
  * @property string $first_name
@@ -28,7 +32,7 @@ use Illuminate\Support\Carbon;
  */
 #[Fillable(['first_name', 'middle_name', 'last_name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;

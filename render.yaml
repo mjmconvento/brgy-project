@@ -80,17 +80,34 @@ services:
           - key: RUN_MIGRATIONS
             value: false
 
+          # Registration emails a verification link and the app is closed until
+          # it is clicked, so mail must actually deliver here. Render's free tier
+          # blocks outbound SMTP (25/465/587), so the `brevo` mailer speaks
+          # Brevo's HTTPS API instead; see ai_docs/email-verification.md.
+          - key: MAIL_MAILER
+            value: brevo
+          - key: MAIL_FROM_NAME
+            value: Barangay Profiling System
+
           # Prompted for on Blueprint sync and stored encrypted. Nothing
           # sensitive and nothing environment-specific belongs in this file.
           #
-          # APP_KEY  php artisan key:generate --show   (must be set, or the
-          #          entrypoint writes a fresh one per container and every
-          #          existing session and signed URL breaks on each deploy)
-          # APP_URL  this service's own public URL, https://
-          # DB_URL   Neon POOLED connection string, with ?sslmode=require
+          # APP_KEY            php artisan key:generate --show   (must be set, or the
+          #                    entrypoint writes a fresh one per container and every
+          #                    existing session and signed URL breaks on each deploy)
+          # APP_URL            this service's own public URL, https://
+          # DB_URL             Neon POOLED connection string, with ?sslmode=require
+          # BREVO_API_KEY      Brevo → Settings → API keys (xkeysib-…). The API key,
+          #                    not the SMTP key.
+          # MAIL_FROM_ADDRESS  exactly the Gmail sender validated in Brevo, or every
+          #                    send fails with `400 sender not valid`
           - key: APP_KEY
             sync: false
           - key: APP_URL
             sync: false
           - key: DB_URL
+            sync: false
+          - key: BREVO_API_KEY
+            sync: false
+          - key: MAIL_FROM_ADDRESS
             sync: false

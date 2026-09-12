@@ -16,7 +16,7 @@ credited where they come up.
 
 ## Contents
 
-- [You need two of your six services](#you-need-two-of-your-six-services)
+- [You need three of your six services](#you-need-three-of-your-six-services)
 - [What this costs](#what-this-costs)
 - [Five repo changes were required](#five-repo-changes-were-required)
 - [How the pieces wire together](#how-the-pieces-wire-together)
@@ -27,18 +27,18 @@ credited where they come up.
 
 ---
 
-## You need two of your six services
+## You need three of your six services
 
 | Service | Needed | Why |
 |---|---|---|
 | **Render** web service | **Yes** | Runs the container. One service, Docker runtime, free plan. |
 | **Neon** Postgres | **Yes** | The database. Neon is Postgres-only — there is no MySQL option — so the app had to be made Postgres-clean. It now is. |
-| MongoDB Atlas | No | Nothing in the app touches Mongo. `composer.json` requires exactly three packages: `laravel/framework`, `laravel/tinker`, `predis/predis`. No `ext-mongodb`, no `mongodb/mongodb`. |
+| **Brevo** | **Yes** (since 2026-09-12) | Registration emails a verification link and the app is closed until it is clicked, so mail has to reach real inboxes. Render Free blocks outbound SMTP (25/465/587), so the `brevo` mailer speaks Brevo's **HTTPS API**. Reuses the account, validated sender and transactional activation from `save_furry_friend`; only a new API key is needed. Walkthrough: [email-verification.md](email-verification.md). |
+| MongoDB Atlas | No | Nothing in the app touches Mongo. No `ext-mongodb`, no `mongodb/mongodb`. |
 | Cloudflare R2 | No | No file storage of any kind. `grep -r 'Storage::\|->store(\|UploadedFile\|->file('` over `app/`, `routes/`, `resources/views/`, `database/` returns **zero matches**. Nothing is uploaded, so there is nothing to put in a bucket. |
 | Cloudflare Pages | No | Pages hosts static sites. This app is server-rendered Blade — nginx *inside* the container serves the Vite build from `public/build`. Verified in the built image: `/build/assets/app-Bv-UW6LG.css` → `200, 29,321 B, text/css` and `/build/assets/app-De1LAS1t.js` → `200, 257,213 B`. There is no separate front end to host. |
-| Brevo | No | The app never sends mail. No `Mail::`, no Mailable, no notification is dispatched, and there are no password-reset routes in `routes/web.php` — the `password_reset_tokens` table exists from Laravel's default migration but nothing writes to it. `User` has the `Notifiable` trait and never uses it. |
 
-So: **Render + Neon.** Keep the other four accounts for the next project.
+So: **Render + Neon + Brevo.** Keep the other three accounts for the next project.
 
 The reason the answer is this short is the architecture. See
 `ai_docs/server-rendering-vs-spa.md` — a server-rendered app is one deployable
@@ -274,6 +274,9 @@ the failure looks like a different problem entirely.
 | `QUEUE_CONNECTION` | `sync` | `database` → a `queue:work` daemon polls the `jobs` table continuously, holds Neon awake permanently and burns the 100 CU-hour allowance in about two weeks. *Reference doc's finding; this app queues nothing at all, so `sync` costs nothing.* |
 | `LOG_CHANNEL` | `stderr` | Otherwise the log goes to a file nobody will read in an ephemeral container. |
 | `PORT` | injected by Render (10000) | The entrypoint renders it into the nginx vhost with `envsubst '${PORT}'`. Only `${PORT}` is named — substituting everything would eat nginx's own `$uri` and `$document_root`. |
+| `MAIL_MAILER` | `brevo` (set in `render.yaml`) | `smtp` → every registration 500s trying to reach a port Render blocks. `log` → the link goes to the container log and nobody can sign up. |
+| `BREVO_API_KEY` | the **API** key, `xkeysib-…`, prompted | Missing → registration 500s *after* creating the row (fail-loud, on purpose). SMTP key instead → `401 Key not found`. |
+| `MAIL_FROM_ADDRESS` | exactly the Gmail sender validated in Brevo, prompted | Anything else → `400 sender not valid` on every send. |
 
 ### Neon needs two connection strings
 
@@ -355,10 +358,12 @@ foreign keys with `ON DELETE CASCADE` / `ON DELETE SET NULL` behave as the suite
 1. Push this branch to GitHub.
 2. Render dashboard → **New → Blueprint** → pick the repo. It reads
    `render.yaml`.
-3. It prompts for the three `sync: false` values:
+3. It prompts for the five `sync: false` values:
    - `APP_KEY` — from step 2
    - `APP_URL` — `https://brgy-profiling.onrender.com`
    - `DB_URL` — the **pooled** string from step 1
+   - `BREVO_API_KEY` and `MAIL_FROM_ADDRESS` — from
+     [email-verification.md](email-verification.md) steps 1 and 0
 4. Apply. First build takes a few minutes: it compiles the PHP extensions, runs
    `composer install --no-dev`, and runs `npm ci && npm run build` for the Tailwind
    and Vite output.
@@ -392,10 +397,13 @@ docker compose run --rm --no-deps -T -u app \
 ```
 
 Registration is also self-serve at `/register`, so you can create the first
-account through the browser instead. Note that **every authenticated user is a
-barangay administrator** — `routes/web.php` has `auth` as its only authorisation
-boundary — so leaving open registration on a public URL gives anyone who signs up
-full access to every resident record. Decide that deliberately.
+account through the browser instead — it emails a verification link and the
+account is closed until the link is clicked (`tinker`-created accounts skip this:
+set `email_verified_at` yourself, as the migration does for pre-existing rows).
+Note that **every verified user is a barangay administrator** — `routes/web.php`
+has `auth` + `verified` as its only authorisation boundary — so leaving open
+registration on a public URL gives anyone with a working mailbox full access to
+every resident record. Decide that deliberately.
 
 To load the full demo data set (3,200 constituents — the 12 MB measured above),
 run the seeder from the dev image, which has Faker:
@@ -493,7 +501,8 @@ what the same code does when it is not limited to a tenth of a CPU.
 | Neon writes start failing | 0.5 GB storage limit. You are at 12 MB, so suspect a runaway loop, not the data. |
 | Intermittent 502s under light traffic | Container OOM-killed. The `render` stage's php-fpm overrides were dropped, so it is running the dev pool's 20 workers on 512 MB. Fix 6. |
 | No way to run `artisan` on the deployed service | Correct — Free web services have no shell and no one-off jobs. Run it from your machine against Neon's direct endpoint, as in steps 3 and 5. |
-| Mail silently fails if you ever add it | Free services cannot make outbound connections on ports 25, 465 or 587. Use an HTTP mail API, not SMTP. |
+| Registration 500s, then the address is "already taken" | `MAIL_MAILER=brevo` with no or a wrong `BREVO_API_KEY`. The row is created before the send fails. [email-verification.md](email-verification.md) — troubleshooting. |
+| Verification email never arrives | Free services cannot make outbound connections on ports 25, 465 or 587, so `MAIL_MAILER` must stay `brevo`. Then check Brevo → Transactional → Logs, and `php artisan email:verification-link` as the escape hatch. |
 
 ---
 
@@ -502,7 +511,7 @@ what the same code does when it is not limited to a tenth of a CPU.
 | Service | Add it when |
 |---|---|
 | **Cloudflare R2** | The app gains file uploads — resident photos, scanned IDs, document attachments. That is the moment `FILESYSTEM_DISK=s3` and the four `AWS_*` variables start mattering. The reference doc's §3 already documents the R2 wiring, including that `AWS_URL` must **not** repeat the bucket name. |
-| **Brevo** | You enable password reset, or email a receipt for a tax payment. The `password_reset_tokens` table is already there. Two warnings: Brevo transactional sending is **not self-serve** (the reference doc's §4 — they have to switch it on for your account, so start days early), and Render Free blocks outbound ports 25/465/587, so you must use Brevo's **HTTP API**, not its SMTP relay. |
+| **Brevo** | *In use since 2026-09-12* for the registration verification link — see [email-verification.md](email-verification.md). Password reset would ride the same transport; the `password_reset_tokens` table is already there. |
 | **Cloudflare Pages** | Only if this app is ever split into an API plus a JS front end. Read `ai_docs/server-rendering-vs-spa.md` first; the ten-item cost list there is why the answer is currently no. |
 | **MongoDB Atlas** | No plausible trigger for this data model. Constituents, taxes and criminal records are relational, with foreign keys doing real work. |
 | **Cloudflare DNS** | You buy a domain. Point it at Render, proxy through Cloudflare for TLS and caching. Pages is still not involved. |

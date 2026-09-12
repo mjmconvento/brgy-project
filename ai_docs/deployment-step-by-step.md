@@ -2,7 +2,9 @@
 
 **One path: Neon Free for PostgreSQL + Render Free for the website.** Use the names below; no extra database, Redis, static site, or domain purchase needed. The background and tradeoffs are in [deployment.md](deployment.md).
 
-> **Demo only for now.** `/register` is public, and every registered user can access all resident records. Use fake resident data. Creating your own account does not close registration; access must be restricted in the application before storing real personal, tax, or criminal-record data.
+> **Demo only for now.** `/register` is public, and every registered user who clicks the verification link in their email can access all resident records. Use fake resident data. Creating your own account does not close registration; access must be restricted in the application before storing real personal, tax, or criminal-record data.
+
+> **Email is required.** Registration sends a verification link and the site stays closed until it is clicked, so steps 6 and 7 need a Brevo API key and validated sender. You already have the Brevo account from `save_furry_friend`; the ten-minute key setup is in [email-verification.md](email-verification.md) steps 0–2. Do that before step 6.
 
 ## 1. Use these names and prepare your laptop
 
@@ -183,18 +185,20 @@ DELETE FROM users WHERE email IN ('admin@brgy.local', 'test1@user.com');
    | Blueprint Path | `render.yaml` |
 
 5. Check the resource preview: **one web service**, named `brgy-profiling`, runtime **Docker**, plan **Free**, region **Singapore**. These come from the repository's `render.yaml`; no manual build or start command is needed.
-6. Fill the three prompted environment variables:
+6. Fill the five prompted environment variables:
 
    | Key | Exactly what to paste into its Value field |
    |---|---|
    | `APP_KEY` | The full `base64:...` value saved in step 4 |
    | `APP_URL` | `https://brgy-profiling.onrender.com` initially; verify the actual URL in step 7 |
    | `DB_URL` | The **POOLED** Neon URL saved in step 3 — hostname contains `-pooler` |
+   | `BREVO_API_KEY` | The `xkeysib-...` **API** key from [email-verification.md](email-verification.md) step 1 — not the SMTP key |
+   | `MAIL_FROM_ADDRESS` | Your Gmail address exactly as it appears under **Verified** at [app.brevo.com/senders](https://app.brevo.com/senders) |
 
    Paste values only, with **no surrounding quotes**. The key is **`DB_URL`**, not `DATABASE_URL`. Do not add `DB_DIRECT` or separate `DB_HOST`, `DB_USERNAME`, and `DB_PASSWORD` fields.
 7. Click **Deploy Blueprint**. Open the created web service, then its **Events/Deploys** page to watch the build. Wait for the deployment to show **Live**. Use **Logs** for runtime errors.
 
-The Blueprint already sets `DB_CONNECTION=pgsql`, `SESSION_DRIVER=database`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`, and **`RUN_MIGRATIONS=false`**. Leave them alone. You ran migrations from your laptop because Render Free has no shell or one-off jobs; the direct connection is also the recommended path for schema changes.
+The Blueprint already sets `DB_CONNECTION=pgsql`, `SESSION_DRIVER=database`, `CACHE_STORE=file`, `QUEUE_CONNECTION=sync`, `MAIL_MAILER=brevo`, `MAIL_FROM_NAME`, and **`RUN_MIGRATIONS=false`**. Leave them alone. You ran migrations from your laptop because Render Free has no shell or one-off jobs; the direct connection is also the recommended path for schema changes.
 
 ## 7. Copy the ACTUAL website URL and create your account
 
@@ -204,9 +208,11 @@ Render assigns a unique `onrender.com` address. It may add a suffix, so **do not
 2. Copy the public `https://...onrender.com` link shown on the service page.
 3. Open **Environment → Environment Variables**. Find `APP_URL` and edit its value to that exact address, with **no trailing slash and no `/login`**.
 4. Choose **Save and deploy**. Do not choose **Save only**; the running container needs the new value. If the value already matches, no change or redeploy is needed.
-5. Once Live, open the actual address with `/register` appended. If you loaded the demo data, you can instead open `/login` and sign in as `admin@brgy.local` / `password`, then skip to item 7.
+5. Once Live, open the actual address with `/register` appended. If you loaded the demo data, you can instead open `/login` and sign in as `admin@brgy.local` / `password` — the seeded accounts are already verified — then skip to item 9.
 6. Enter your first and last name, optional middle name, your email in lowercase, and a unique password with its confirmation. Click **Register**.
-7. You should land on the dashboard. With the demo data it shows 3,200 residents and populated charts; without it, zero residents/taxes/records are expected. Either way, your laptop's own local accounts do not exist in this database.
+7. You land on **Check your email**. Open the link in the email from `…@…t-sender-sib.com` (subject **Verify your email address**; check spam once if it takes more than a minute). No email? Work through [email-verification.md → Troubleshooting](email-verification.md#troubleshooting).
+8. Clicking **Verify Email Address** signs you in and shows the dashboard with a green **Your email address has been verified.** banner.
+9. With the demo data the dashboard shows 3,200 residents and populated charts; without it, zero residents/taxes/records are expected. Either way, your laptop's own local accounts do not exist in this database.
 
 **Reminder:** other people can also register. This walkthrough does not secure public sign-up. Do not enter real resident information yet.
 
@@ -239,7 +245,7 @@ After setup, clear the temporary terminal variable:
 unset DB_DIRECT
 ```
 
-For future schema changes, repeat step 5 using the new code **before deploying code that needs those tables**. Use `migrate`, never `migrate:fresh`; keep the same Neon database and `APP_KEY`.
+For future schema changes, repeat step 5 using the new code **before deploying code that needs those tables**. Use `migrate`, never `migrate:fresh`; keep the same Neon database and `APP_KEY`. The first such change is already here: `2026_09_12_000000_mark_existing_users_as_verified` marks every account that registered before email verification existed as verified, so run it before deploying that code or those accounts will be asked to verify — see [email-verification.md](email-verification.md) step 3.
 
 ## If you get stuck
 
@@ -255,6 +261,8 @@ For future schema changes, repeat step 5 using the new code **before deploying c
 | Dashboard is empty | You skipped the optional demo data in step 5. Run that block once; the site never copies your laptop's local database. |
 | Seeder stops with `duplicate key ... users_email_unique` | The demo data is already loaded; nothing was added. If you had registered `admin@brgy.local` yourself before seeding, the bulk data was never loaded — register with a different email, then run the seeder again. |
 | App fails just after editing an environment variable | Confirm you used **Save and deploy**, not **Save only**, and wait for Live. |
+| After registering, "Check your email" but nothing arrives | `BREVO_API_KEY` or `MAIL_FROM_ADDRESS` is wrong or missing — Render → **Logs** shows the transport error. Fix, **Save and deploy**, then press **Resend verification email**. Escape hatch: `php artisan email:verification-link`, per [email-verification.md](email-verification.md). |
+| Signed in but every page returns to "Check your email" | Expected until the link is clicked. If this is an account that existed before email verification, run the `2026_09_12` migration (step 5) or press **Resend**. |
 
 ## Provider references
 

@@ -30,12 +30,24 @@ return [
     | your mailers below. You may also add additional mailers if needed.
     |
     | Supported: "smtp", "sendmail", "mailgun", "ses", "ses-v2",
-    |            "postmark", "resend", "log", "array",
+    |            "postmark", "resend", "brevo", "log", "array",
     |            "failover", "roundrobin"
     |
     */
 
     'mailers' => [
+
+        // Not a first-party Laravel transport: registered in AppServiceProvider
+        // via `Mail::extend`, the pattern Laravel's mail documentation uses with
+        // Brevo as its worked example. It sends over Brevo's HTTPS API on 443 on
+        // purpose — Render's free tier blocks outbound SMTP (25/465/587), so an
+        // `smtp` mailer pointed at Brevo's relay cannot work there.
+        //
+        // Needs BREVO_API_KEY (config/services.php) and a MAIL_FROM_ADDRESS that
+        // is exactly a sender validated in the Brevo dashboard.
+        'brevo' => [
+            'transport' => 'brevo',
+        ],
 
         'smtp' => [
             'transport' => 'smtp',

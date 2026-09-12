@@ -1,7 +1,9 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Notification;
 
 it('redirects guests from the application to the login screen', function () {
     $this->get(route('constituents.index'))->assertRedirect(route('login'));
@@ -59,7 +61,9 @@ it('locks a user out after five failed attempts', function () {
     expect(session('errors')->first('email'))->toContain('Too many login attempts');
 });
 
-it('registers a new administrator and signs them in', function () {
+it('registers a new administrator, signs them in and emails a verification link', function () {
+    Notification::fake();
+
     $this->post(route('register'), [
         'first_name' => 'Nova',
         'middle_name' => 'Santos',
@@ -67,14 +71,17 @@ it('registers a new administrator and signs them in', function () {
         'email' => 'nova@brgy.local',
         'password' => 'password-please',
         'password_confirmation' => 'password-please',
-    ])->assertRedirect(route('dashboard'));
+    ])->assertRedirect(route('verification.notice'));
 
     $user = User::query()->where('email', 'nova@brgy.local')->sole();
 
     expect(Hash::check('password-please', $user->password))->toBeTrue()
-        ->and($user->full_name)->toBe('Nova Santos Clerk');
+        ->and($user->full_name)->toBe('Nova Santos Clerk')
+        ->and($user->hasVerifiedEmail())->toBeFalse();
 
     $this->assertAuthenticatedAs($user);
+
+    Notification::assertSentTo($user, VerifyEmail::class);
 });
 
 it('rejects a registration missing the required name parts', function () {

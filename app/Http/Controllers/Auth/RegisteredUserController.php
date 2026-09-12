@@ -22,6 +22,11 @@ class RegisteredUserController extends Controller
 
     /**
      * Register a new barangay staff account and sign them in.
+     *
+     * `User` implements `MustVerifyEmail`, so the framework's listener on
+     * `Registered` sends the verification link. The account lands on the
+     * "check your inbox" page; the `verified` middleware keeps the rest of the
+     * application closed until the link is clicked.
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
@@ -34,6 +39,6 @@ class RegisteredUserController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard');
+        return redirect()->route('verification.notice');
     }
 }

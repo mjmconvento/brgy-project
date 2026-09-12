@@ -38,14 +38,14 @@ end, all running in Docker.
 | Area | Capability |
 |---|---|
 | **Dashboard** | Landing page with headline figures and five charts: paid vs unpaid tax over the last 12 billing periods, tax records by status, outstanding tax by barangay, constituents by city, and votes per barangay captain. |
-| **Authentication** | Email/password login with session fixation protection and per-email + IP login throttling. Self-service registration. |
+| **Authentication** | Email/password login with session fixation protection and per-email + IP login throttling. Self-service registration with **email verification**: the link is emailed on sign-up and the application stays closed until it is clicked (see [ai_docs/email-verification.md](ai_docs/email-verification.md)). |
 | **Constituents** | Full CRUD, paginated 15 to a page and searchable across every name and address column. Clicking a row opens the profile. |
 | **Barangay captains** | Full CRUD for candidates, plus a paginated roster of the constituents who voted for each. |
 | **Structured addresses** | House number (optional), street, barangay, city, and country are separate columns, so the data can be grouped and charted. |
 | **Tax records** | Per-constituent monthly billing periods with a paid/unpaid status and an amount. One record per constituent per month. |
 | **Criminal records** | Per-constituent case log with a timestamp and free-text details. |
 | **Derived insight** | Each profile shows outstanding tax owed and whether the resident is tax-clear / record-clean. These are computed from the data, never stored. |
-| **Profile** | Signed-in users update their own first / middle / last name and email. |
+| **Profile** | Signed-in users update their own first / middle / last name and email. Changing the email re-sends the verification link and closes the app until it is clicked. |
 
 ### Seeded data
 
@@ -486,14 +486,15 @@ What is covered:
 
 | File | Contract under test |
 |---|---|
-| `AuthenticationTest` | Guest redirect, login success/failure, lockout after 5 attempts, registration with name parts, logout |
+| `AuthenticationTest` | Guest redirect, login success/failure, lockout after 5 attempts, registration with name parts that lands on the verify page and sends the link, logout |
+| `EmailVerificationTest` | The `verified` gate, the notice page, a valid signed link verifying, wrong hash / missing signature rejected, the signed-out → login → back-to-the-link round trip, resend and its no-op for verified users |
 | `ConstituentCrudTest` | Listing, 15-per-page pagination, search across name *and* address columns, create, address accessors with and without a house number, validation rejection, update, delete cascading to child records |
 | `BarangayCaptainCrudTest` | Create, validation, voter roster, roster pagination via `constituents_page`, constituent count, delete nulling the reference without deleting residents |
 | `TaxRecordTest` | Nested route attaches to the right parent, duplicate period rejected, same period allowed for a different constituent, editing keeps its own period, month/status range checks |
 | `CriminalRecordTest` | Nested create, future date rejected, shallow update/delete |
 | `DerivedConstituentStateTest` | The derived flags agree with the rows in every load strategy, and the listing stays at 2 queries |
 | `DashboardTest` | Every aggregate: totals, status split, the twelve monthly buckets and their window, barangay/city/captain rankings and their ordering, recent records, empty-database rendering, and a bounded query count |
-| `ProfileTest` | Self-service update, optional middle name, email uniqueness, keeping your own email |
+| `ProfileTest` | Self-service update, optional middle name, email uniqueness, keeping your own email, verification reset + re-send when the email changes |
 
 `tests/Pest.php` exposes an `asAdmin()` helper for acting as a signed-in administrator.
 

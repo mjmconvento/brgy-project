@@ -22,6 +22,14 @@ return [
         'key' => env('RESEND_API_KEY'),
     ],
 
+    // Read by the `brevo` mailer registered in AppServiceProvider. This is the
+    // **API key** (prefix `xkeysib-`, https://app.brevo.com/settings/keys/api),
+    // not the SMTP key on the neighbouring tab: only the API key works over
+    // HTTPS. See ai_docs/email-verification.md.
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+    ],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

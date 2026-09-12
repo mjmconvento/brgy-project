@@ -1,6 +1,8 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Support\Facades\Notification;
 
 it('updates the signed-in user own profile', function () {
     $user = asAdmin(User::factory()->create([
@@ -60,4 +62,38 @@ it('lets a user keep their own email address', function () {
     ])->assertSessionHasNoErrors();
 
     expect($user->refresh()->first_name)->toBe('Renamed');
+});
+
+it('resets verification and sends a new link when the email changes', function () {
+    Notification::fake();
+
+    $user = asAdmin(User::factory()->create(['email' => 'old@brgy.local']));
+
+    $this->put(route('profile.update'), [
+        'first_name' => 'Nova',
+        'last_name' => 'Clerk',
+        'email' => 'new@brgy.local',
+    ])->assertRedirect(route('profile.edit'));
+
+    expect($user->refresh()->hasVerifiedEmail())->toBeFalse();
+
+    Notification::assertSentTo($user, VerifyEmail::class);
+
+    $this->get(route('dashboard'))->assertRedirect(route('verification.notice'));
+});
+
+it('leaves verification alone when the email is unchanged', function () {
+    Notification::fake();
+
+    $user = asAdmin(User::factory()->create(['email' => 'mine@brgy.local']));
+
+    $this->put(route('profile.update'), [
+        'first_name' => 'Renamed',
+        'last_name' => 'Person',
+        'email' => 'mine@brgy.local',
+    ])->assertSessionHasNoErrors();
+
+    expect($user->refresh()->hasVerifiedEmail())->toBeTrue();
+
+    Notification::assertNothingSent();
 });
