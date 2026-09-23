@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Caddy terminates TLS and forwards plain HTTP, so without this every
+        // generated URL is http:// and the browser blocks the assets as mixed
+        // content. The proxy is the only route in, so trusting any peer is safe.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
