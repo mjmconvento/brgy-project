@@ -246,3 +246,49 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-c", "/etc/supervisord.conf"]
+
+# ---------------------------------------------------------------------------
+# Stage 5 — Seeding image
+#
+# database/factories calls fake(), which ships in fakerphp/faker — a
+# require-dev package. The `app` stage installs with --no-dev, so running
+# `db:seed` there dies with "Call to undefined function
+# Database\Factories\fake()".
+#
+# Shipping Faker in the serving image to fix that would put a data-generation
+# library in production for the sake of a command that runs twice a year. This
+# stage instead layers the dev vendor tree over `app` and is never served: it
+# has no ports, no healthcheck, and compose only builds it behind a profile.
+# ---------------------------------------------------------------------------
+FROM php:8.5.10-fpm-alpine AS vendor-dev
+
+ENV COMPOSER_ALLOW_SUPERUSER=1 \
+    COMPOSER_NO_INTERACTION=1
+
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+RUN apk add --no-cache git unzip icu-dev libzip-dev postgresql-dev \
+    && docker-php-ext-install -j"$(nproc)" intl zip pdo_pgsql bcmath
+
+WORKDIR /app
+
+COPY composer.json composer.lock* ./
+
+RUN composer install \
+        --no-scripts \
+        --no-autoloader \
+        --no-progress \
+        --prefer-dist
+
+COPY . .
+
+RUN composer dump-autoload --optimize --no-scripts
+
+FROM app AS seed
+
+USER root
+COPY --from=vendor-dev --chown=app:app /app/vendor /var/www/html/vendor
+USER app
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["php", "artisan", "db:seed", "--force"]
