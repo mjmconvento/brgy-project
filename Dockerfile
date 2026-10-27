@@ -47,7 +47,7 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 # ---------------------------------------------------------------------------
 # Stage 2 — Frontend assets
 # ---------------------------------------------------------------------------
-FROM node:24-alpine AS assets
+FROM node:26-alpine AS assets
 
 WORKDIR /app
 
