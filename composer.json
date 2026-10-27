@@ -6,7 +6,7 @@
     "keywords": ["laravel", "barangay", "profiling", "crud"],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.5",
         "laravel/framework": "^13.30",
         "laravel/tinker": "^3.0",
         "predis/predis": "^3.2",
@@ -23,7 +23,8 @@
         "nunomaduro/collision": "^8.6",
         "pestphp/pest": "^5.1",
         "pestphp/pest-plugin-laravel": "^5.0",
-        "phpunit/phpunit": "^13.3.2"
+        "phpunit/phpunit": "^13.3.2",
+        "rector/rector": "^2.7"
     },
     "autoload": {
         "psr-4": {

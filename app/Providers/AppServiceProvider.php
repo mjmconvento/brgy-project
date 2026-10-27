@@ -43,10 +43,10 @@ class AppServiceProvider extends ServiceProvider
         // The client carries an explicit timeout because a hung outbound call
         // otherwise holds a php-fpm worker for the default 100 seconds — and the
         // Render pool is sized to very few workers (docker/php/render-fpm.conf).
-        Mail::extend('brevo', fn (): TransportInterface => (new BrevoTransportFactory(
+        Mail::extend('brevo', fn (): TransportInterface => new BrevoTransportFactory(
             null,
             HttpClient::create(['timeout' => 10]),
-        ))->create(new Dsn(
+        )->create(new Dsn(
             'brevo+api',
             'default',
             Config::string('services.brevo.key'),

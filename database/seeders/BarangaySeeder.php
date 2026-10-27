@@ -31,47 +31,47 @@ class BarangaySeeder extends Seeder
     /**
      * Number of captains to generate.
      */
-    private const CAPTAINS = 60;
+    private const int CAPTAINS = 60;
 
     /**
      * Total constituents, including the unaffiliated ones below.
      */
-    private const CONSTITUENTS = 3_200;
+    private const int CONSTITUENTS = 3_200;
 
     /**
      * Residents who did not vote for any candidate.
      */
-    private const UNAFFILIATED = 120;
+    private const int UNAFFILIATED = 120;
 
     /**
      * Rows per `INSERT` statement.
      */
-    private const CHUNK = 500;
+    private const int CHUNK = 500;
 
     /**
      * Billing periods taxes may be drawn from, counting back from this month.
      */
-    private const BILLING_PERIODS = 24;
+    private const int BILLING_PERIODS = 24;
 
     /**
      * Percentage of a captain's constituents living in the captain's own city.
      */
-    private const HOME_CITY_SHARE = 80;
+    private const int HOME_CITY_SHARE = 80;
 
     /**
      * Percentage of a captain's constituents in the captain's own barangay.
      */
-    private const HOME_BARANGAY_SHARE = 65;
+    private const int HOME_BARANGAY_SHARE = 65;
 
     /**
      * One in this many constituents carries at least one unpaid tax record.
      */
-    private const UNPAID_IN = 3;
+    private const int UNPAID_IN = 3;
 
     /**
      * One in this many constituents has a criminal record.
      */
-    private const RECORDED_IN = 4;
+    private const int RECORDED_IN = 4;
 
     /**
      * The console driving the seed, when `db:seed` supplied one.

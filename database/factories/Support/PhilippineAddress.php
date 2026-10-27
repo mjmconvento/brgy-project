@@ -13,7 +13,7 @@ final class PhilippineAddress
     /**
      * @var list<string>
      */
-    private const STREETS = [
+    private const array STREETS = [
         'Mabini Street', 'Rizal Avenue', 'Bonifacio Street', 'Aguinaldo Street',
         'Del Pilar Street', 'Luna Street', 'Quezon Avenue', 'Osmeña Street',
         'Roxas Boulevard', 'Magsaysay Street', 'Katipunan Avenue', 'Legarda Street',
@@ -26,7 +26,7 @@ final class PhilippineAddress
     /**
      * @var list<string>
      */
-    private const BARANGAYS = [
+    private const array BARANGAYS = [
         'San Antonio', 'Santo Domingo', 'San Isidro', 'Poblacion', 'Bagong Silang',
         'Maligaya', 'Mapayapa', 'Malinis', 'San Roque', 'Santa Cruz',
         'Bagumbayan', 'Pinagbuhatan', 'Kalayaan', 'Masagana', 'Malaya',
@@ -38,7 +38,7 @@ final class PhilippineAddress
      *
      * @var list<string>
      */
-    private const CITIES = [
+    private const array CITIES = [
         'Quezon City', 'Manila', 'Caloocan', 'Pasig', 'Taguig', 'Makati',
         'Parañaque', 'Las Piñas', 'Marikina', 'Muntinlupa', 'Valenzuela',
         'Antipolo', 'Bacoor', 'Dasmariñas', 'Imus', 'San Jose del Monte',

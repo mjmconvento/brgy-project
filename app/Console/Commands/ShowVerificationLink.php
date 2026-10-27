@@ -28,6 +28,7 @@ class ShowVerificationLink extends Command
      *
      * @var string
      */
+    #[\Override]
     protected $signature = 'email:verification-link {email : The account\'s email address}';
 
     /**
@@ -35,6 +36,7 @@ class ShowVerificationLink extends Command
      *
      * @var string
      */
+    #[\Override]
     protected $description = 'Print the signed email verification link for an account';
 
     /**

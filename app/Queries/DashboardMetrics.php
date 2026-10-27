@@ -23,17 +23,17 @@ class DashboardMetrics
     /**
      * Billing periods shown on the monthly chart.
      */
-    private const MONTHS = 12;
+    private const int MONTHS = 12;
 
     /**
      * Rows kept in each "top N" breakdown.
      */
-    private const BREAKDOWN_LIMIT = 8;
+    private const int BREAKDOWN_LIMIT = 8;
 
     /**
      * Recent criminal records listed on the dashboard.
      */
-    private const RECENT_LIMIT = 5;
+    private const int RECENT_LIMIT = 5;
 
     /**
      * @return array<string, mixed>

@@ -12,7 +12,7 @@ abstract class TestCase extends BaseTestCase
      *
      * @var list<string>
      */
-    private const ALLOWED_DATABASES = ['brgy_testing', ':memory:'];
+    private const array ALLOWED_DATABASES = ['brgy_testing', ':memory:'];
 
     /**
      * Refuse to run against anything but the dedicated test database.

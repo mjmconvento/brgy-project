@@ -15,7 +15,7 @@ class ConstituentController extends Controller
     /**
      * Number of rows per listing page.
      */
-    private const PER_PAGE = 15;
+    private const int PER_PAGE = 15;
 
     /**
      * Paginated, searchable listing of constituents.

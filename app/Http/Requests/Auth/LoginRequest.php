@@ -20,12 +20,12 @@ class LoginRequest extends FormRequest
     /**
      * Maximum failed attempts before the throttle kicks in.
      */
-    private const MAX_ATTEMPTS = 5;
+    private const int MAX_ATTEMPTS = 5;
 
     /**
      * Seconds the throttle holds once tripped.
      */
-    private const DECAY_SECONDS = 60;
+    private const int DECAY_SECONDS = 60;
 
     /**
      * Get the validation rules that apply to the request.

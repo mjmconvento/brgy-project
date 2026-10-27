@@ -5,7 +5,7 @@
 #
 #   vendor  : composer dependencies (production set) + optimized autoloader
 #   assets  : Vite/Tailwind build output (public/build)
-#   app     : php:8.5.10-fpm-alpine runtime, non-root, opcache + JIT enabled
+#   app     : php:8.5.12-fpm-alpine runtime, non-root, opcache + JIT enabled
 #
 # Build:  docker compose build
 # Run  :  docker compose up
@@ -14,7 +14,7 @@
 # ---------------------------------------------------------------------------
 # Stage 1 — PHP dependencies
 # ---------------------------------------------------------------------------
-FROM php:8.5.10-fpm-alpine AS vendor
+FROM php:8.5.12-fpm-alpine AS vendor
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
@@ -71,7 +71,7 @@ RUN mkdir -p public storage/framework/views && npm run build
 # ---------------------------------------------------------------------------
 # Stage 3 — Application runtime
 # ---------------------------------------------------------------------------
-FROM php:8.5.10-fpm-alpine AS app
+FROM php:8.5.12-fpm-alpine AS app
 
 ARG UID=1000
 ARG GID=1000
@@ -260,7 +260,7 @@ CMD ["supervisord", "-c", "/etc/supervisord.conf"]
 # stage instead layers the dev vendor tree over `app` and is never served: it
 # has no ports, no healthcheck, and compose only builds it behind a profile.
 # ---------------------------------------------------------------------------
-FROM php:8.5.10-fpm-alpine AS vendor-dev
+FROM php:8.5.12-fpm-alpine AS vendor-dev
 
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     COMPOSER_NO_INTERACTION=1

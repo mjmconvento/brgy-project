@@ -1,0 +1,73 @@
+# Dependabot version updates.
+# Dependabot is built into GitHub — this file is all that is needed to get
+# update pull requests. Security-only updates additionally require the
+# "Dependabot security updates" toggle in the repository settings.
+version: 2
+updates:
+  # Laravel app (composer.json / composer.lock).
+  - package-ecosystem: composer
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      php-runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+      php-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  # Vite / Tailwind / Alpine (package.json / package-lock.json).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      js-runtime:
+        dependency-type: production
+        update-types: [minor, patch]
+      js-tooling:
+        dependency-type: development
+        update-types: [minor, patch]
+
+  # Base images in the Dockerfile (php stages and the node assets stage).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
+    ignore:
+      # PHP is pinned to an exact 8.5.x patch. Only patch bumps (8.5.13, ...)
+      # should arrive as PRs; a new PHP minor/major means new deprecations and
+      # composer.json's "php" constraint, so it is a planned upgrade, not a PR.
+      - dependency-name: php
+        update-types:
+          ["version-update:semver-major", "version-update:semver-minor"]
+      # Odd-numbered Node lines are short-lived (EOL after six months).
+      - dependency-name: node
+        versions: ["25.x", "27.x"]
+    groups:
+      base-images:
+        patterns: ["*"]
+        update-types: [minor, patch]
+
+  # Service images in compose.yaml (nginx, postgres, redis, node, mailpit).
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    ignore:
+      # A postgres major refuses to start against the existing data volume;
+      # it needs a dump/restore (or pg_upgrade), not a merged PR.
+      - dependency-name: postgres
+        update-types: ["version-update:semver-major"]
+      # Odd-numbered Node lines are short-lived (EOL after six months).
+      - dependency-name: node
+        versions: ["25.x", "27.x"]
+    groups:
+      service-images:
+        patterns: ["*"]
+        update-types: [minor, patch]

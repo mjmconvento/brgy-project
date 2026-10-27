@@ -67,7 +67,7 @@ Every component is on its current release, pinned explicitly.
 
 | Layer | Choice | Version |
 |---|---|---|
-| Language | PHP | **8.5.10** |
+| Language | PHP | **8.5.12** |
 | Framework | Laravel | **13.30** |
 | Database | PostgreSQL | **18.6** |
 | Web server | nginx | **1.31-alpine** |
@@ -121,7 +121,7 @@ The image is a four-stage build:
 
 1. **`vendor`** — Composer install + optimized autoloader (production dependencies only).
 2. **`assets`** — `npm ci` + `vite build` producing `public/build`.
-3. **`app`** — `php:8.5.10-fpm-alpine` runtime with only the extensions the app uses
+3. **`app`** — `php:8.5.12-fpm-alpine` runtime with only the extensions the app uses
    (`pdo_pgsql`, `bcmath`, `intl`, `zip`, `pcntl`, `redis`; OPcache with tracing JIT is
    already built into the base image). Runs as the non-root `app` user, speaks FastCGI
    on 9000, and is the stage `compose.yaml` targets. Final image is ~156 MB.
@@ -584,7 +584,7 @@ Dockerfile  compose.yaml  Makefile
 
 | Then (Laravel 5.1, 2015) | Now |
 |---|---|
-| PHP 5.5.9, Laravel 5.1 | PHP 8.5.10, Laravel 13.30 |
+| PHP 5.5.9, Laravel 5.1 | PHP 8.5.12, Laravel 13.30 |
 | `app/Http/routes.php`, ~40 hand-written routes | `routes/web.php`, named `Route::resource` with `->shallow()` nesting |
 | `app/Http/Kernel.php`, `Console/Kernel.php`, 5 middleware classes | `bootstrap/app.php` |
 | Models in `app/`, `$table` overrides, no types | `app/Models/`, conventional table names, typed relations, casts, `#[Fillable]` |
@@ -616,7 +616,7 @@ compare behaviour.
 
 ## Running without Docker
 
-Supported, but Docker is the intended path. You need PHP 8.4+ with `pdo_pgsql`, `bcmath`,
+Supported, but Docker is the intended path. You need PHP 8.5+ with `pdo_pgsql`, `bcmath`,
 `intl`, `zip`, and `pcntl`, plus PostgreSQL 16+, Redis, Node 24, and Composer.
 
 ```bash
