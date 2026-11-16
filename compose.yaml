@@ -165,7 +165,7 @@ services:
   # Vite dev server (profile: dev)
   # -------------------------------------------------------------------------
   node:
-    image: node:24-alpine
+    image: node:26-alpine
     profiles: ["dev"]
     working_dir: /var/www/html
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
