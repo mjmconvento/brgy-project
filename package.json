@@ -7,13 +7,13 @@
         "dev": "vite"
     },
     "dependencies": {
-        "alpinejs": "^3.17.2",
-        "chart.js": "^4.5.1"
+        "alpinejs": "^3.17.5",
+        "chart.js": "^4.6.1"
     },
     "devDependencies": {
-        "@tailwindcss/vite": "^4.3.3",
-        "laravel-vite-plugin": "^3.2.0",
+        "@tailwindcss/vite": "^4.3.5",
+        "laravel-vite-plugin": "^3.2.1",
         "tailwindcss": "^4.3.3",
-        "vite": "^8.2.2"
+        "vite": "^8.3.6"
     }
 }
