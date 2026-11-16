@@ -188,7 +188,7 @@ services:
   # Mailpit — catches every outbound mail (profile: dev)
   # -------------------------------------------------------------------------
   mailpit:
-    image: axllent/mailpit:v1.31
+    image: axllent/mailpit:v1.32
     profiles: ["dev"]
     restart: unless-stopped
     environment:
