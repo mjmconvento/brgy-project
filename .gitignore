@@ -26,3 +26,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+###> claude code ###
+/.claude/settings.local.json
+/.claude/hooks/__pycache__/
+###< claude code ###
